@@ -1,0 +1,4 @@
+# These lines will be added to /etc/hosts
+# @container will be translated to IP address of the container on the Traefik network
+
+@nginx product-catalog.localhost

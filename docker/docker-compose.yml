@@ -1,19 +1,68 @@
-version: "3"
+version: "3.7"
+
+networks:
+    traefik:
+
+volumes:
+    mariadb:
+
+x-php-base: &php-base
+    build:
+        context: ./containers/php
+    working_dir: /app
+    networks:
+        - traefik
+    depends_on:
+        - nginx
 
 services:
-  nginx:
-    image: nginx:stable-alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./..:/app:ro
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
-    depends_on:
-      - php
+    traefik:
+        image: traefik:latest
+        restart: unless-stopped
+        networks:
+            - traefik
+        ports:
+            - "80:80"
+            - "3000:3000"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./containers/traefik/traefik.yml:/traefik.yml:ro
+        labels:
+            traefik.enable: 1
+            traefik.http.routers.api.rule: Host(`traefik.localhost`)
+            traefik.http.routers.api.entrypoints: web
+            traefik.http.routers.api.service: api@internal
 
-  php:
-    build:
-      context: ./php
-    working_dir: /app
-    volumes:
-      - ../:/app
+    php:
+        <<: *php-base
+        volumes:
+            - ../:/app
+            - ./containers/php/ini/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
+            - ./containers/php/hosts:/home/docker/hosts:ro
+        labels:
+            traefik.enable: true
+            traefik.http.routers.php.rule: Host(`assets.localhost`)
+            traefik.http.routers.php.entrypoints: assets
+            traefik.http.services.php.loadbalancer.server.port: 3000
+
+
+    php_xdebug:
+        <<: *php-base
+        volumes:
+            - ../:/app
+            - ./containers/php/ini/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
+            - ./containers/php/hosts:/home/docker/hosts:ro
+            - ./containers/php/ini/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
+
+    nginx:
+        image: nginx:latest
+        working_dir: /app
+        networks:
+            - traefik
+        volumes:
+            - ../:/app
+            - ./containers/nginx/conf.d:/etc/nginx/conf.d
+        labels:
+            traefik.enable: true
+            traefik.http.routers.nginx.rule: Host(`large-streamer.localhost`)
+            traefik.http.routers.nginx.entrypoints: web

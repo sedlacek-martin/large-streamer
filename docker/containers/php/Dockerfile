@@ -1,4 +1,4 @@
-FROM php:8.3.4-fpm
+FROM php:8.3-fpm
 
 # Dependencies
 RUN apt-get -y update && \
@@ -18,22 +18,14 @@ RUN apt-get -y update && \
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 RUN chmod +x /usr/local/bin/install-php-extensions
 
-# Install the dependencies
-RUN #install-php-extensions gd oauth amqp zip bcmath sockets xdebug intl imagick pdo_mysql
+RUN install-php-extensions gd oauth amqp zip bcmath sockets xdebug intl pdo_mysql
 
 # Composer
 RUN install-php-extensions @composer
 
-# Node
-RUN #curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
-#    apt-get -y install nodejs
-
-# Install Yarn
-RUN #npm install --global yarn
-
 # Entrypoint
-#COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-#ENTRYPOINT ["entrypoint.sh"]
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
 CMD ["php-fpm"]
 
 # Setup user docker
