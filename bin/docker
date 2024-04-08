@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+PROJECT_DIR="${SCRIPT_DIR}/../docker";
+CONTAINER_NAME="docker-php-1";
+OPTIONS=()
+
+function compose_up() {
+      echo "${MESSAGE}"
+      docker-compose up -d "${OPTIONS[@]}"
+  }
+
+function container_enter() {
+    docker exec -it "${CONTAINER_NAME}" bash
+}
+
+if ! cd "${PROJECT_DIR}" &> /dev/null;
+then
+    echo "Project directory not found: ${PROJECT_DIR}"
+    exit 1;
+fi
+
+while getopts ":udrebf" opt; do
+    case "${opt}" in
+        u)
+            compose_up
+            ;;
+        d)
+            docker-compose down
+            ;;
+        r)
+            docker-compose restart
+            ;;
+        e)
+            container_enter
+            ;;
+        b)
+            OPTIONS+=("--build")
+            ;;
+        f)
+            OPTIONS+=("--force-recreate")
+            ;;
+        \?)
+            echo "Invalid option: ${OPTARG}" 1>&2
+            ;;
+        :)
+            echo "Invalid option: ${OPTARG} requires an argument" 1>&2
+            ;;
+    esac
+done
+
+if [[ "${OPTIND}" -eq 1 ]];
+then
+    container_enter
+fi
