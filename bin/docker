@@ -3,7 +3,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 PROJECT_DIR="${SCRIPT_DIR}/../docker";
-CONTAINER_NAME="docker-php-1";
+CONTAINER_NAME="large-streamer-php-1";
 OPTIONS=()
 
 function compose_up() {
